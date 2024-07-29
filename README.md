@@ -1,3 +1,6 @@
-# zanagrafe
-Small application to retrieve data about italian Anagrafe (number of residents and stuff like that). Written in Zig.
-The data is retrieved from: https://github.com/italia/anpr-opendata/tree/main
+# Zanagrafe
+
+It reads data from italian Anagrafe and prints out some info about italian residents in each region and maybe some other stuff!
+Data retrieved from: https://github.com/italia/anpr-opendata 
+Zig version: 0.14.0-dev.541+2e8acdf6f
+
