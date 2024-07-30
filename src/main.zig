@@ -1,10 +1,10 @@
+/// Download json file from github repo through http request, parse it and show the data,
+/// Maybe I could write a simple database to manipulate the jsond data.
 const std = @import("std");
 const print = std.debug.print;
+const http = std.http;
 
 pub fn main() !void {
-
-    //Perform http request to github and retrieve the json file.
-
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
         const deinit_result = gpa.deinit();
@@ -12,25 +12,33 @@ pub fn main() !void {
     }
     const alloc = gpa.allocator();
 
-    var http_client: std.http.Client = std.http.Client{ .allocator = alloc };
+    var http_client = http.Client{ .allocator = alloc };
     defer http_client.deinit();
 
-    const url_file_to_download = "https://github.com/italia/anpr-opendata/blob/main/data/popolazione_residente_export.json";
+    const url_file_to_download = "https://raw.githubusercontent.com/italia/anpr-opendata/main/data/popolazione_residente_export.json";
     const uri = try std.Uri.parse(url_file_to_download);
     const headers = .{};
     var response_body = std.ArrayList(u8).init(alloc);
     defer response_body.deinit();
 
-    // Fetch something from github
-    const fetch_options = std.http.Client.FetchOptions{
-        .location = std.http.Client.FetchOptions.Location{ .uri = uri },
-        .method = std.http.Method.GET,
-        .response_storage = std.http.Client.FetchOptions.ResponseStorage{ .dynamic = &response_body },
+    // Fetch options for http GET request
+    const fetch_options = http.Client.FetchOptions{
+        .location = http.Client.FetchOptions.Location{ .uri = uri },
+        .method = http.Method.GET,
+        .response_storage = http.Client.FetchOptions.ResponseStorage{ .dynamic = &response_body },
         .headers = headers,
     };
-    const fetch_results = try http_client.fetch(fetch_options); //Sending http request
+    const fetch_results = try http_client.fetch(fetch_options); //Sending http request to fetch file
 
-    print("Fetch results http status: {}\n", .{fetch_results});
-    print("Response body capacity: {}\n", .{response_body.capacity});
-    print("Response body: {s}\n", .{response_body.items});
+    print("INFO: Fetch results http status: {s}\n", .{fetch_results.status.phrase().?});
+    print("INFO: Response body capacity: {}\n", .{response_body.capacity});
+
+    const is_json_valid = try std.json.validate(alloc, response_body.items);
+
+    if (!is_json_valid) {
+        defer print("INFO: file fetched from given link is not a valid JSON file, exiting.\n", .{});
+    }
+
+    // var parsed_string = try std.json.parseFromSlice(u8, alloc, response_body.items[0..], .{});
+    // defer parsed_string.deinit();
 }
