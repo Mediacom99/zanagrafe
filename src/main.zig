@@ -2,13 +2,14 @@
 /// Maybe I could write a simple database to manipulate the jsond data.
 const std = @import("std");
 const print = std.debug.print;
+const log = std.log;
 const http = std.http;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
         const deinit_result = gpa.deinit();
-        print("INFO: general purpose allocator deinit status: {}\n", .{deinit_result});
+        log.info("general purpose allocator deinit status: {}", .{deinit_result});
     }
     const alloc = gpa.allocator();
 
@@ -30,13 +31,13 @@ pub fn main() !void {
     };
     const fetch_results = try http_client.fetch(fetch_options); //Sending http request to fetch file
 
-    print("INFO: Fetch results http status: {s}\n", .{fetch_results.status.phrase().?});
-    print("INFO: Response body capacity: {}\n", .{response_body.capacity});
+    log.info("fetch results http status: {s}", .{fetch_results.status.phrase().?});
+    log.info("response body capacity: {}", .{response_body.capacity});
 
     const is_json_valid = try std.json.validate(alloc, response_body.items);
 
     if (!is_json_valid) {
-        defer print("INFO: file fetched from given link is not a valid JSON file, exiting.\n", .{});
+        defer log.info("file fetched from given link is not a valid JSON file, exiting.\n", .{});
     }
 
     // var parsed_string = try std.json.parseFromSlice(u8, alloc, response_body.items[0..], .{});
