@@ -26,4 +26,5 @@ pub fn main() !void {
     const json_list = json_parsed.value.array; //ArrayList containing std.json.Value data, each object is the data for a comune
 
     root.linearDisplayGrep(&json_list, arg_comune.items);
+    root.printBigAndSmall(&json_list);
 }

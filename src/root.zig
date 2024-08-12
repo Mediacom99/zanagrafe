@@ -71,7 +71,44 @@ pub fn linearDisplayGrep(json_list: *const JsonList, comune_chosen: []const u8) 
     for (json_list.items) |obj| {
         const comune = obj.object.get("COMUNE").?.string;
         if (std.mem.containsAtLeast(u8, comune, 1, comune_chosen)) {
-            print("\tNumero residenti del comune di {s} al {s}: {}\n", .{ comune, obj.object.get("DATA ELABORAZIONE").?.string, obj.object.get("RESIDENTI").?.integer });
+            const residents = obj.object.get("RESIDENTI").?.integer;
+            print("\tNumero residenti del comune di {s} al {s}: {}\n", .{ comune, obj.object.get("DATA ELABORAZIONE").?.string, residents });
         }
     }
+}
+
+/// FIXME: if more comuni have same num of residents, prints only the first one it
+/// finds.
+pub fn printBigAndSmall(json_list: *const JsonList) void {
+    var comune = json_list.items[0].object.get("COMUNE").?.string;
+    var residents = json_list.items[0].object.get("RESIDENTI").?.integer;
+
+    const Extrema = struct {
+        big: i64 = 0,
+        small: i64 = 0,
+        com_big: []const u8 = undefined,
+        com_small: []const u8 = undefined,
+    };
+
+    var status = Extrema{
+        .big = residents,
+        .small = residents,
+        .com_big = comune,
+        .com_small = comune,
+    };
+
+    for (json_list.items) |obj| {
+        comune = obj.object.get("COMUNE").?.string;
+        residents = obj.object.get("RESIDENTI").?.integer;
+
+        if (residents > status.big) {
+            status.big = residents;
+            status.com_big = comune;
+        } else if (residents < status.small) {
+            status.small = residents;
+            status.com_small = comune;
+        }
+    }
+    print("Comune with the highest number of residents ({}): {s}\n", .{ status.big, status.com_big });
+    print("Comune with the lowest number of residents ({}): {s}\n", .{ status.small, status.com_small });
 }
