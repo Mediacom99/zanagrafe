@@ -15,7 +15,7 @@ pub fn main() !void {
     const alloc = gpa.allocator();
     var arg_comune: []const u8 = undefined;
 
-    var arg_iter = std.process.args();
+    var arg_iter = try std.process.argsWithAllocator(alloc);
     defer arg_iter.deinit();
 
     _ = arg_iter.skip();
