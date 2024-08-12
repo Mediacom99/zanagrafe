@@ -2,11 +2,10 @@ const std = @import("std");
 const print = std.debug.print;
 const log = std.log;
 const http = std.http;
-const JsonList = std.ArrayListAligned(std.json.Value,null);
+const JsonList = std.ArrayListAligned(std.json.Value, null);
 
-//Retrieves raw json from github and returns a slice that has to be freed by the caller
+///Retrieves raw json from github and returns a slice that has to be freed by the caller
 pub fn retrieveRawJson(alloc: std.mem.Allocator, url: []const u8) ![]u8 {
-    
     var http_client = http.Client{ .allocator = alloc };
     defer http_client.deinit();
 
@@ -22,30 +21,57 @@ pub fn retrieveRawJson(alloc: std.mem.Allocator, url: []const u8) ![]u8 {
         .response_storage = http.Client.FetchOptions.ResponseStorage{ .dynamic = &response_body },
         .headers = headers,
     };
-    
+
     const fetch_results = try http_client.fetch(fetch_options); //Sending http request to fetch file
 
     log.info("fetch results http status: {s}", .{fetch_results.status.phrase().?});
-    log.debug("response body capacity: {}", .{response_body.capacity});
+    log.info("http response body capacity (u8): {}", .{response_body.capacity});
 
     const is_json_valid = try std.json.validate(alloc, response_body.items);
-
     //TODO should handle this case better
     if (!is_json_valid) {
         log.err("file fetched from given link is not a valid JSON file, exiting.", .{});
+        std.process.fatal("File fetched from given url IS NOT VALID JSON!\nExiting", .{});
     }
 
     return response_body.toOwnedSlice();
-
 }
 
-pub fn printStuff(json_list: *const JsonList) void {
+/// retrieves all the provided arguments and concatenates them into a
+/// single []u8 slice.
+/// check if at least an argument has been provided. if not use default comune `MILANO`
+/// TODO: should check that the name is written in capital letter
+pub fn getArgsAsSentence(alloc: std.mem.Allocator) ![]u8 {
+    var arg_iter = try std.process.argsWithAllocator(alloc);
+    defer arg_iter.deinit();
 
-    const numero_comuni = json_list.items.len;
-    const data_elab = json_list.items[0].object.get("DATA ELABORAZIONE").?.string;
-    const comune = json_list.items[0].object.get("COMUNE").?.string;
-    const residenti = json_list.items[0].object.get("RESIDENTI").?.integer;
+    var arg_string = std.ArrayList(u8).init(alloc);
+    defer arg_string.deinit();
 
-    log.info("Numero totale di comuni in Italia al {s}: {}", .{ data_elab, numero_comuni });
-    log.info("Numero di residenti del comune di {s} aggiornato al {s}: {}", .{ comune, data_elab, residenti });
+    _ = arg_iter.skip(); //Skip program name
+
+    const first = arg_iter.next() orelse {
+        log.err("wrong number of arguments, please use like this: `./zanagrafe <nome comune>` --> using default value", .{});
+        try arg_string.appendSlice("MILANO");
+        return try arg_string.toOwnedSlice();
+    };
+
+    try arg_string.appendSlice(first); //append first arg
+    try arg_string.append(' ');
+    while (arg_iter.next()) |value| { //append all other args until null
+        try arg_string.appendSlice(value);
+        try arg_string.append(' ');
+    }
+
+    _ = arg_string.pop(); //remove extra space
+    return try arg_string.toOwnedSlice();
+}
+
+pub fn linearDisplayGrep(json_list: *const JsonList, comune_chosen: []const u8) void {
+    for (json_list.items) |obj| {
+        const comune = obj.object.get("COMUNE").?.string;
+        if (std.mem.containsAtLeast(u8, comune, 1, comune_chosen)) {
+            print("\tNumero residenti del comune di {s} al {s}: {}\n", .{ comune, obj.object.get("DATA ELABORAZIONE").?.string, obj.object.get("RESIDENTI").?.integer });
+        }
+    }
 }
