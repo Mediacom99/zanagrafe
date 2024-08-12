@@ -31,7 +31,7 @@ pub fn retrieveRawJson(alloc: std.mem.Allocator, url: []const u8) ![]u8 {
     //TODO should handle this case better
     if (!is_json_valid) {
         log.err("file fetched from given link is not a valid JSON file, exiting.", .{});
-        std.process.fatal("File fetched from given url IS NOT VALID JSON!\nExiting", .{});
+        std.process.exit(1);
     }
 
     return response_body.toOwnedSlice();
