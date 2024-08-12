@@ -31,15 +31,26 @@ pub fn main() !void {
     };
     const fetch_results = try http_client.fetch(fetch_options); //Sending http request to fetch file
 
-    log.info("fetch results http status: {s}", .{fetch_results.status.phrase().?});
-    log.info("response body capacity: {}", .{response_body.capacity});
+    log.warn("fetch results http status: {s}", .{fetch_results.status.phrase().?});
+    log.warn("response body capacity: {}", .{response_body.capacity});
 
     const is_json_valid = try std.json.validate(alloc, response_body.items);
 
     if (!is_json_valid) {
-        defer log.info("file fetched from given link is not a valid JSON file, exiting.\n", .{});
+        defer log.err("file fetched from given link is not a valid JSON file, exiting.", .{});
     }
 
-    // var parsed_string = try std.json.parseFromSlice(u8, alloc, response_body.items[0..], .{});
-    // defer parsed_string.deinit();
+    var json_parsed = try std.json.parseFromSlice(std.json.Value, alloc, response_body.items, .{ .ignore_unknown_fields = true });
+    defer json_parsed.deinit();
+
+    const root = json_parsed.value;
+    const json_list = root.array; //ArrayList containing std.json.Value data, each object is the data for a comune
+
+    const numero_comuni = json_list.items.len;
+    const data_elab = json_list.items[0].object.get("DATA ELABORAZIONE").?.string;
+    const comune = json_list.items[0].object.get("COMUNE").?.string;
+    const residenti = json_list.items[0].object.get("RESIDENTI").?.integer;
+
+    log.info("Numero totale di comuni in Italia al {s}: {}", .{ data_elab, numero_comuni });
+    log.info("Numero di residenti del comune di {s} aggiornato al {s}: {}", .{ comune, data_elab, residenti });
 }
