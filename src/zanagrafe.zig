@@ -7,9 +7,9 @@ const zan = @import("utils.zig");
 
 pub fn main() !void {
     // Heap allocator
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer arena.deinit();
-    const alloc = arena.allocator();
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const alloc = gpa.allocator();
 
     //Get first command line argument as Comune to search
     const arg_comune: [:0]const u8 = zan.getFirstArg(alloc);

@@ -22,9 +22,7 @@ pub const JsonList = struct {
 
 test "initialization" {
     // Heap Arean Allocator
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer arena.deinit();
-    const alloc = arena.allocator();
+    const alloc = std.testing.allocator;
 
     const url = "https://raw.githubusercontent.com/italia/anpr-opendata/main/data/popolazione_residente_export.json";
 
