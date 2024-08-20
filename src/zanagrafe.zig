@@ -2,10 +2,13 @@ const std = @import("std");
 const print = std.debug.print;
 const log = std.log;
 const http = std.http;
+
+//Types
 const JsonList = std.ArrayListAligned(std.json.Value, null);
+const Allocator = std.mem.Allocator;
 
 ///Retrieves raw json from github and returns a slice that has to be freed by the caller
-pub fn retrieveRawJson(alloc: std.mem.Allocator, url: []const u8) ![]u8 {
+pub fn retrieveRawJson(alloc: Allocator, url: []const u8) ![]u8 {
     var http_client = http.Client{ .allocator = alloc };
     defer http_client.deinit();
 
@@ -37,34 +40,21 @@ pub fn retrieveRawJson(alloc: std.mem.Allocator, url: []const u8) ![]u8 {
     return response_body.toOwnedSlice();
 }
 
-/// retrieves all the provided arguments and concatenates them into a
-/// single []u8 slice.
-/// check if at least an argument has been provided. if not use default comune `MILANO`
-/// TODO: should check that the name is written in capital letter
-pub fn getArgsAsSentence(alloc: std.mem.Allocator) ![]u8 {
+pub fn getFirstArg(alloc: Allocator) [:0]const u8 {
     var arg_iter = try std.process.argsWithAllocator(alloc);
     defer arg_iter.deinit();
 
-    var arg_string = std.ArrayList(u8).init(alloc);
-    defer arg_string.deinit();
+    //Initialization using result location
+    const default: [:0]const u8 = &("MILANO".*);
 
-    _ = arg_iter.skip(); //Skip program name
+    //Skip program name
+    _ = arg_iter.skip();
 
-    const first = arg_iter.next() orelse {
-        log.err("wrong number of arguments, please use like this: `./zanagrafe <nome comune>` --> using default value", .{});
-        try arg_string.appendSlice("MILANO");
-        return try arg_string.toOwnedSlice();
+    //return first arg if there is one otherwise return default slice
+    return arg_iter.next() orelse {
+        log.err("wrong number of arguments, please use like this: `./zanagrafe <nome comune>` --> using default value: MILANO", .{});
+        return default;
     };
-
-    try arg_string.appendSlice(first); //append first arg
-    try arg_string.append(' ');
-    while (arg_iter.next()) |value| { //append all other args until null
-        try arg_string.appendSlice(value);
-        try arg_string.append(' ');
-    }
-
-    _ = arg_string.pop(); //remove extra space
-    return try arg_string.toOwnedSlice();
 }
 
 pub fn linearDisplayGrep(json_list: *const JsonList, comune_chosen: []const u8) void {

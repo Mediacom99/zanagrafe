@@ -4,20 +4,19 @@ const std = @import("std");
 // declaratively construct a build graph that will be executed by an external
 // runner.
 pub fn build(b: *std.Build) void {
-
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
     const zanagrafe_lib = b.addStaticLibrary(.{
         .name = "zanagrafe",
-        .root_source_file = b.path("src/root.zig"),
+        .root_source_file = b.path("src/zanagrafe.zig"),
         .target = target,
         .optimize = optimize,
     });
 
     const exe = b.addExecutable(.{
         .name = "zanagrafe-run",
-        .root_source_file = b.path("src/main.zig"),
+        .root_source_file = b.path("src/zanagrafe-run.zig"),
         .target = target,
         .optimize = optimize,
         .strip = false,
@@ -30,7 +29,7 @@ pub fn build(b: *std.Build) void {
     // step when running `zig build`).
     b.installArtifact(zanagrafe_lib);
     b.installArtifact(exe);
-    
+
     // This *creates* a Run step in the build graph, to be executed when another
     // step is evaluated that depends on it. The next line below will establish
     // such a dependency.
