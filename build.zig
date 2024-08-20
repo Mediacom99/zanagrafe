@@ -9,14 +9,14 @@ pub fn build(b: *std.Build) void {
 
     const zanagrafe_lib = b.addStaticLibrary(.{
         .name = "zanagrafe",
-        .root_source_file = b.path("src/zanagrafe.zig"),
+        .root_source_file = b.path("src/Jsonlist.zig"),
         .target = target,
         .optimize = optimize,
     });
 
     const exe = b.addExecutable(.{
         .name = "zanagrafe-run",
-        .root_source_file = b.path("src/zanagrafe-run.zig"),
+        .root_source_file = b.path("src/zanagrafe.zig"),
         .target = target,
         .optimize = optimize,
         .strip = false,

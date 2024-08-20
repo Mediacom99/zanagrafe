@@ -3,7 +3,7 @@
 const std = @import("std");
 const print = std.debug.print;
 const log = std.log;
-const zan = @import("zanagrafe.zig");
+const zan = @import("utils.zig");
 
 pub fn main() !void {
     // Heap allocator
